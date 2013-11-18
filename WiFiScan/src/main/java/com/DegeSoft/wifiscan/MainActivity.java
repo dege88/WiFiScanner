@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.net.wifi.WifiManager;
+import android.widget.ScrollView;
 import android.widget.ShareActionProvider;
 import android.widget.TextView;
 
@@ -35,6 +36,8 @@ public class MainActivity extends ActionBarActivity {
     private ShareActionProvider mShareActionProvider;
     Intent sendIntent = new Intent();
 
+    boolean stopped = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +52,7 @@ public class MainActivity extends ActionBarActivity {
         mainWifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
         receiverWifi = new WifiReceiver();
+
         registerReceiver(receiverWifi, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         if(mainWifi.isWifiEnabled()==false)
         {
@@ -65,13 +69,16 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void run()
             {
-                mainWifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                if(!stopped)
+                {
+                    mainWifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-                receiverWifi = new WifiReceiver();
-                registerReceiver(receiverWifi, new IntentFilter(
-                        WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-                mainWifi.startScan();
-                doInback();
+                    receiverWifi = new WifiReceiver();
+                    registerReceiver(receiverWifi, new IntentFilter(
+                            WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                    mainWifi.startScan();
+                    doInback();
+                }
             }
         }, 1000);
 
@@ -80,16 +87,46 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onPause()
     {
-        unregisterReceiver(receiverWifi);
+        try{
+            unregisterReceiver(receiverWifi);
+        }
+        catch(Exception e)
+        {}
+        stopped = true;
         super.onPause();
     }
 
     @Override
     protected void onResume()
     {
-        registerReceiver(receiverWifi, new IntentFilter(
-                WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        registerReceiver(receiverWifi, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        stopped = false;
+        doInback();
         super.onResume();
+    }
+
+    @Override
+    protected void onStop()
+    {
+        try{
+        unregisterReceiver(receiverWifi);
+        }
+        catch(Exception e)
+        {}
+        stopped = true;
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        try{
+            unregisterReceiver(receiverWifi);
+        }
+        catch(Exception e)
+        {}
+        stopped = true;
+        super.onDestroy();
     }
 
     @Override
@@ -124,6 +161,26 @@ public class MainActivity extends ActionBarActivity {
         {
             startActivity(sendIntent);
             return true;
+        }
+        else if(id == R.id.action_pauseresume)
+        {
+            if(stopped == true)
+            {
+                registerReceiver(receiverWifi, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                doInback();
+                stopped = false;
+                item.setTitle(R.string.action_pauseresume);
+            }
+            else
+            {
+                try{
+                    unregisterReceiver(receiverWifi);
+                }
+                catch(Exception e)
+                {}
+                stopped = true;
+                item.setTitle(R.string.action_resumepause);
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -170,17 +227,23 @@ public class MainActivity extends ActionBarActivity {
             {
                 String temp = "";
                 TextView textView = (TextView) findViewById(R.id.section_text);
+                ScrollView scrollView = (ScrollView) findViewById(R.id.SCROLLER_ID);
                 for(int i = 0; i < FiMACAddresses.size();i++)
                 {
                     temp = temp + FiMACAddresses.get(i) + " ";
                     temp = temp + FiSSIDs.get(i) + System.getProperty("line.separator");
                 }
-                textView.setText(temp);
+                if((textView != null) && (scrollView != null))
+                {
+                    textView.setText(temp);
+                    scrollView.smoothScrollTo(0, textView.getBottom()); //mostra sempre l'ultima riga inserita
+                }
                 sendIntent = new Intent();
                 sendIntent.setAction(Intent.ACTION_SEND);
                 sendIntent.putExtra(Intent.EXTRA_TEXT, temp);
                 sendIntent.setType("text/plain");
                 setShareIntent(sendIntent);
+
             }
 
 

@@ -14,4 +14,9 @@
         android:title="@string/action_reset"
         android:orderInCategory="100"
         app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/action_pauseresume"
+        android:title="@string/action_pauseresume"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom" />
 </menu>
