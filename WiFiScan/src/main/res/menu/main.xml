@@ -5,18 +5,18 @@
 
     <item
         android:id="@+id/menu_item_share"
-        android:showAsAction="ifRoom"
+        app:showAsAction="ifRoom"
         android:title="@string/action_share"
         android:actionProviderClass=
             "android.widget.ShareActionProvider" />
 
-    <item android:id="@+id/action_reset"
-        android:title="@string/action_reset"
+    <item android:id="@+id/action_pauseresume"
+        android:title="@string/action_pauseresume"
         android:orderInCategory="100"
         app:showAsAction="ifRoom" />
 
-    <item android:id="@+id/action_pauseresume"
-        android:title="@string/action_pauseresume"
+    <item android:id="@+id/action_reset"
+        android:title="@string/action_reset"
         android:orderInCategory="100"
         app:showAsAction="ifRoom" />
 </menu>
